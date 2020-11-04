@@ -1,31 +1,59 @@
-from flask import Flask, render_template, session, redirect, url_for, session
-from flask_wtf import FlaskForm
-from wtforms import TextField, SubmitField
-from wtforms.validators import NumberRange
+# Usage: python app.py
+import os
 
+from flask import Flask, render_template, request, redirect, url_for
+from werkzeug import secure_filename
+from keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
+from keras.models import Sequential, load_model
 import numpy as np
-from tensorflow.keras.models import load_model
-import joblib
+import argparse
+import imutils
+import cv2
+import time
+import uuid
+import base64
+
+img_width, img_height = 150, 150
+model_path = 'malaria_detector.pkl'
+#model_weights_path = './models/weights.h5'
+model = load_model(model_path)
+# model.load_weights(model_weights_path)
+
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = set(['jpg', 'jpeg'])
 
 
-#def return_prediction(model, scaler, sample_json):
-#   # For larger data features, you should probably write a for loop
-#   # That builds out this array for you
+def get_as_base64(url):
+   return base64.b64encode(requests.get(url).content)
 
-#   s_len = sample_json['sepal_length']
-#   s_wid = sample_json['sepal_width']
-#   p_len = sample_json['petal_length']
-#   p_wid = sample_json['petal_width']
 
-#   flower = [[s_len, s_wid, p_len, p_wid]]
+def predict(file):
+   x = load_img(file, target_size=(img_width, img_height))
+   x = img_to_array(x)
+   x = np.expand_dims(x, axis=0)
+   array = model.predict(x)
+   result = array[0]
+   answer = np.argmax(result)
+   if answer == 0:
+      print("Label: Daisy")
+   elif answer == 1:
+      print("Label: Rose")
+   elif answer == 2:
+      print("Label: Sunflower")
+   return answer
 
-#   flower = scaler.transform(flower)
 
-#   classes = np.array(['setosa', 'versicolor', 'virginica'])
+def my_random_string(string_length=10):
+   """Returns a random string of length string_length."""
+   random = str(uuid.uuid4())  # Convert UUID format to a Python string.
+   random = random.upper()  # Make all characters uppercase.
+   random = random.replace("-", "")  # Remove the UUID '-'.
+   return random[0:string_length]  # Return the random string.
 
-#   class_ind = model.predict_classes(flower)
 
-#   return classes[class_ind][0]
+def allowed_file(filename):
+   return '.' in filename and \
+          filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
 app = Flask(__name__)
@@ -33,55 +61,58 @@ app = Flask(__name__)
 # We will later learn much better ways to do this!!
 app.config['SECRET_KEY'] = 'mysecretkey'
 
-# REMEMBER TO LOAD THE MODEL AND THE SCALER!
-flower_model = load_model("malaria_detector.pkl")
-#flower_scaler = joblib.load("iris_scaler.pkl")
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-
-# Now create a WTForm Class
-# Lots of fields available:
-# http://wtforms.readthedocs.io/en/stable/fields.html
-class FlowerForm(FlaskForm):
-   sep_len = TextField('Sepal Length')
-   sep_wid = TextField('Sepal Width')
-   pet_len = TextField('Petal Length')
-   pet_wid = TextField('Petal Width')
-
-   submit = SubmitField('Analyze')
+@app.route("/")
+def template_test():
+   return render_template('template.html', label='', imagesource='../uploads/template.jpg')
 
 
 @app.route('/', methods=['GET', 'POST'])
-def index():
-   # Create instance of the form.
-   form = FlowerForm()
-   # If the form is valid on submission (we'll talk about validation next)
-   if form.validate_on_submit():
-      # Grab the data from the breed on the form.
+def upload_file():
+   if request.method == 'POST':
+      import time
+      start_time = time.time()
+      file = request.files['file']
 
-      session['sep_len'] = form.sep_len.data
-      session['sep_wid'] = form.sep_wid.data
-      session['pet_len'] = form.pet_len.data
-      session['pet_wid'] = form.pet_wid.data
+      if file and allowed_file(file.filename):
+         filename = secure_filename(file.filename)
 
-#      return redirect(url_for("prediction"))
+         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+         file.save(file_path)
+         result = predict(file_path)
+         if result == 0:
+            label = 'Daisy'
+         elif result == 1:
+            label = 'Rose'
+         elif result == 2:
+            label = 'Sunflowers'
+         print(result)
+         print(file_path)
+         filename = my_random_string(6) + filename
 
-   return render_template('home.html', form=form)
-
-
-@app.route('/prediction')
-def prediction():
-   content = {}
-
-   content['sepal_length'] = float(session['sep_len'])
-   content['sepal_width'] = float(session['sep_wid'])
-   content['petal_length'] = float(session['pet_len'])
-   content['petal_width'] = float(session['pet_wid'])
-
-#   results = return_prediction(model=flower_model, scaler=flower_scaler, sample_json=content)
-
-#   return render_template('prediction.html', results=results)
+         os.rename(file_path, os.path.join(app.config['UPLOAD_FOLDER'], filename))
+         print("--- %s seconds ---" % str(time.time() - start_time))
+         return render_template('template.html', label=label, imagesource='../uploads/' + filename)
 
 
-if __name__ == '__main__':
-   app.run(debug=True)
+from flask import send_from_directory
 
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+   return send_from_directory(app.config['UPLOAD_FOLDER'],
+                              filename)
+
+
+from werkzeug import SharedDataMiddleware
+
+app.add_url_rule('/uploads/<filename>', 'uploaded_file',
+                 build_only=True)
+app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
+   '/uploads': app.config['UPLOAD_FOLDER']
+})
+
+if __name__ == "__main__":
+   app.debug = False
+   app.run(host='0.0.0.0', port=3000)
