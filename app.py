@@ -1,35 +1,87 @@
-from flask import Flask, render_template, request
-from PIL import Image
+from flask import Flask, render_template, session, redirect, url_for, session
+from flask_wtf import FlaskForm
+from wtforms import TextField, SubmitField
+from wtforms.validators import NumberRange
+
 import numpy as np
-from keras.models import load_model
-import tensorflow as tf
+from tensorflow.keras.models import load_model
+import joblib
 
-app = Flask(__name__, template_folder='templates')
 
-def init():
-   global model,graph
-   model = load_model('model/malaria_detector.pkl')
-#   graph = tf.get_default_graph()
+#def return_prediction(model, scaler, sample_json):
+#   # For larger data features, you should probably write a for loop
+#   # That builds out this array for you
+
+#   s_len = sample_json['sepal_length']
+#   s_wid = sample_json['sepal_width']
+#   p_len = sample_json['petal_length']
+#   p_wid = sample_json['petal_width']
+
+#   flower = [[s_len, s_wid, p_len, p_wid]]
+
+#   flower = scaler.transform(flower)
+
+#   classes = np.array(['setosa', 'versicolor', 'virginica'])
+
+#   class_ind = model.predict_classes(flower)
+
+#   return classes[class_ind][0]
+
+
+app = Flask(__name__)
+# Configure a secret SECRET_KEY
+# We will later learn much better ways to do this!!
+app.config['SECRET_KEY'] = 'mysecretkey'
+
+# REMEMBER TO LOAD THE MODEL AND THE SCALER!
+flower_model = load_model("malaria_detector.pkl")
+#flower_scaler = joblib.load("iris_scaler.pkl")
+
+
+# Now create a WTForm Class
+# Lots of fields available:
+# http://wtforms.readthedocs.io/en/stable/fields.html
+class FlowerForm(FlaskForm):
+   sep_len = TextField('Sepal Length')
+   sep_wid = TextField('Sepal Width')
+   pet_len = TextField('Petal Length')
+   pet_wid = TextField('Petal Width')
+
+   submit = SubmitField('Analyze')
+
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+   # Create instance of the form.
+   form = FlowerForm()
+   # If the form is valid on submission (we'll talk about validation next)
+   if form.validate_on_submit():
+      # Grab the data from the breed on the form.
+
+      session['sep_len'] = form.sep_len.data
+      session['sep_wid'] = form.sep_wid.data
+      session['pet_len'] = form.pet_len.data
+      session['pet_wid'] = form.pet_wid.data
+
+#      return redirect(url_for("prediction"))
+
+   return render_template('home.html', form=form)
+
+
+@app.route('/prediction')
+def prediction():
+   content = {}
+
+   content['sepal_length'] = float(session['sep_len'])
+   content['sepal_width'] = float(session['sep_wid'])
+   content['petal_length'] = float(session['pet_len'])
+   content['petal_width'] = float(session['pet_wid'])
+
+#   results = return_prediction(model=flower_model, scaler=flower_scaler, sample_json=content)
+
+#   return render_template('prediction.html', results=results)
+
 
 if __name__ == '__main__':
-   print(("* Loading Keras model and Flask starting server..."
-      "please wait until server has fully started"))
-   init()
-   app.run(debug = True)
-
-@app.route('/')
-def upload_file():
-   return render_template('index.html')
-
-@app.route('/uploader', methods = ['POST'])
-def upload_image_file():
-   if request.method == 'POST':
-      img = Image.open(request.files['file'].stream).convert("L")
-      img = img.resize((28,28))
-      im2arr = np.array(img)
-      im2arr = im2arr.reshape(1,28,28,1)
- #     with graph.as_default():
-      y_pred = model.predict_classes(im2arr)
-
-      return 'Predicted Number: ' + str(y_pred[0])
+   app.run(debug=True)
 
