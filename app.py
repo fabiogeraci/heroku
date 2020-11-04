@@ -57,10 +57,6 @@ def allowed_file(filename):
 
 
 app = Flask(__name__)
-# Configure a secret SECRET_KEY
-# We will later learn much better ways to do this!!
-app.config['SECRET_KEY'] = 'mysecretkey'
-
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route("/")
