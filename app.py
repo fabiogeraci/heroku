@@ -65,7 +65,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route("/")
 def template_test():
-   return render_template('template.html', label='', imagesource='../uploads/template.jpg')
+   return render_template('template.html', label='')
 
 
 @app.route('/', methods=['GET', 'POST'])
