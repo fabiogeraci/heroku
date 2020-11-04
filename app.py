@@ -1,114 +1,50 @@
-# Usage: python app.py
-import os
-
-from flask import Flask, render_template, request, redirect, url_for
-from werkzeug import secure_filename
-from keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
-from keras.models import Sequential, load_model
+from flask import Flask, render_template, request
+from scipy.misc import imsave , imread, imresize
 import numpy as np
-import argparse
-import imutils
-import cv2
-import time
-import uuid
+import keras.models
+import re
 import base64
 
-img_width, img_height = 150, 150
-model_path = 'malaria_detector.pkl'
-#model_weights_path = './models/weights.h5'
-model = load_model(model_path)
-# model.load_weights(model_weights_path)
-
-UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = set(['jpg', 'jpeg'])
-
-
-def get_as_base64(url):
-   return base64.b64encode(requests.get(url).content)
-
-
-def predict(file):
-   x = load_img(file, target_size=(img_width, img_height))
-   x = img_to_array(x)
-   x = np.expand_dims(x, axis=0)
-   array = model.predict(x)
-   result = array[0]
-   answer = np.argmax(result)
-   if answer == 0:
-      print("Label: Daisy")
-   elif answer == 1:
-      print("Label: Rose")
-   elif answer == 2:
-      print("Label: Sunflower")
-   return answer
-
-
-def my_random_string(string_length=10):
-   """Returns a random string of length string_length."""
-   random = str(uuid.uuid4())  # Convert UUID format to a Python string.
-   random = random.upper()  # Make all characters uppercase.
-   random = random.replace("-", "")  # Remove the UUID '-'.
-   return random[0:string_length]  # Return the random string.
-
-
-def allowed_file(filename):
-   return '.' in filename and \
-          filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
-
+# create a instance of a flask app
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-@app.route("/")
-def template_test():
-   return render_template('template.html', label='')
+# renders index.html
+@app.route('/')
+def index():
+    return render_template("index.html")
 
+# Predict function
+@app.route('/predict/', methods=['GET','POST'])
+def predict():
 
-@app.route('/', methods=['GET', 'POST'])
-def upload_file():
-   if request.method == 'POST':
-      import time
-      start_time = time.time()
-      file = request.files['file']
+    # get data from drawing canvas and save as image
+    parseImg(request.get_data())
 
-      if file and allowed_file(file.filename):
-         filename = secure_filename(file.filename)
+    # read parsed image back in 8-bit, black and white mode (L)
+    x = imread('output.png', mode='L')
+    x = np.invert(x)
+    x = imresize(x,(28,28))
 
-         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-         file.save(file_path)
-         result = predict(file_path)
-         if result == 0:
-            label = 'Daisy'
-         elif result == 1:
-            label = 'Rose'
-         elif result == 2:
-            label = 'Sunflowers'
-         print(result)
-         print(file_path)
-         filename = my_random_string(6) + filename
+    # reshape image data for use in neural network
+    x = x.reshape(1,28,28,1)
 
-         os.rename(file_path, os.path.join(app.config['UPLOAD_FOLDER'], filename))
-         print("--- %s seconds ---" % str(time.time() - start_time))
-         return render_template('template.html', label=label, imagesource='../uploads/' + filename)
+    # load model to predict number
+    model = keras.models.load_model("malaria_detector.pkl")
 
+    # Use predict function and pass image x through it to get answer
+    out = model.predict(x)
+    print(out)
+    # change out to number string
+    response = np.array_str(np.argmax(out, axis=1))
+    print(response)
+    return response
 
-from flask import send_from_directory
+# Parsing Image function
+def parseImg(imgData):
+    # parse canvas bytes and save as output.png
+    imgstr = re.search(b'base64,(.*)', imgData).group(1)
+    with open('output.png','wb') as output:
+        output.write(base64.decodebytes(imgstr))
 
-
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-   return send_from_directory(app.config['UPLOAD_FOLDER'],
-                              filename)
-
-
-from werkzeug import SharedDataMiddleware
-
-app.add_url_rule('/uploads/<filename>', 'uploaded_file',
-                 build_only=True)
-app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
-   '/uploads': app.config['UPLOAD_FOLDER']
-})
-
-if __name__ == "__main__":
-   app.debug = True
-#   app.run(host='0.0.0.0', port=3000)
+if __name__ == '__main__':
+    app.run(debug = True)
