@@ -27,6 +27,7 @@ with open("model/classifier.pickle", "rb") as handle:
 #model = load_model(classifier)
 #print('Model loaded. Start serving...')
 
+MYDIR = os.path.dirname(__file__)
 UPLOAD_FOLDER = '/uploads'
 
 app = Flask(__name__)
@@ -62,7 +63,7 @@ def submit_file():
             return redirect(request.url)
         if file:
             filename = secure_filename(file.filename)
-            file.save(os.path.join('uploads/', filename))
+            file.save(os.path.join(MYDIR + "/" + app.config['UPLOAD_FOLDER'], filename))
             get_prediction(filename)
             label, acc = get_prediction(filename)
             flash(label)
