@@ -37,8 +37,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def get_prediction(filename):
 
-    image = load_img('images/' + filename, target_size=(224, 224))
-    image = img_to_array(os.path.join(app.config['UPLOAD_FOLDER'], "image432.jpeg"))
+    #image = load_img('images/' + filename, target_size=(224, 224))
+    image = load_img(os.path.join(app.config['UPLOAD_FOLDER'], "image432.jpeg"), target_size=(224, 224))
+    image = img_to_array(image)
     image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
     image = preprocess_input(image)
     classifier.precompute = False
