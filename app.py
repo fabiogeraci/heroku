@@ -14,7 +14,6 @@ from tensorflow import keras
 from keras.preprocessing.image import load_img
 from keras.preprocessing.image import img_to_array
 
-
 from tensorflow.keras.applications.imagenet_utils import preprocess_input, decode_predictions
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
@@ -63,7 +62,7 @@ def submit_file():
             return redirect(request.url)
         if file:
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'],filename))
+            file.save(os.path.join('uploads/', filename))
             get_prediction(filename)
             label, acc = get_prediction(filename)
             flash(label)
