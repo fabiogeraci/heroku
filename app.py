@@ -1,6 +1,7 @@
 #Python Standard lib
 import numpy as np
 import os
+import pickle
 
 #Flask Import for web app
 from flask import Flask, render_template, request, redirect, flash, url_for
@@ -19,10 +20,12 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 
 # Model saved with Keras model.save()
-MODEL_PATH = 'malaria_detector.pkl'
+with open("model/classifier.pickle", "rb") as handle:
+    classifier = pickle.load(handle)
+#MODEL_PATH = 'malaria_detector.pkl'
 
 # Load your own trained model
-model = load_model(MODEL_PATH)
+model = load_model(classifier)
 print('Model loaded. Start serving...')
 
 UPLOAD_FOLDER = '/uploads'
