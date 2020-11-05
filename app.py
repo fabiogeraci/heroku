@@ -42,7 +42,7 @@ def get_prediction(filename):
     image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
     image = preprocess_input(image)
     classifier.precompute = False
-    yhat = classifier.predict(os.path.join(app.config['UPLOAD_FOLDER'], filename,image432.jpeg))
+    yhat = classifier.predict(os.path.join(app.config['UPLOAD_FOLDER'], filename,"image432.jpeg"))
     label = decode_predictions(yhat)
     label = label[0][0]
     print('%s (%.2f%%)' % (label[1], label[2] * 100))
