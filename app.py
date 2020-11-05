@@ -38,11 +38,11 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def get_prediction(filename):
 
     image = load_img('images/' + filename, target_size=(224, 224))
-    image = img_to_array(image)
+    image = img_to_array(os.path.join(app.config['UPLOAD_FOLDER'], "image432.jpeg"))
     image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
     image = preprocess_input(image)
     classifier.precompute = False
-    yhat = classifier.predict(os.path.join(app.config['UPLOAD_FOLDER'], "image432.jpeg"))
+    yhat = classifier.predict(image)
     label = decode_predictions(yhat)
     label = label[0][0]
     print('%s (%.2f%%)' % (label[1], label[2] * 100))
