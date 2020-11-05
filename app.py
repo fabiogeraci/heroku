@@ -2,7 +2,7 @@
 import numpy as np
 import os
 import pickle
-from waitress import serve
+#from waitress import serve
 
 #Flask Import for web app
 from flask import Flask, render_template, request, redirect, flash, url_for
@@ -12,8 +12,11 @@ from werkzeug.utils import secure_filename
 # TensorFlow and tf.keras
 import tensorflow as tf
 from tensorflow import keras
-from keras.preprocessing.image import load_img
-from keras.preprocessing.image import img_to_array
+from tensorflow.keras.preprocessing.image import load_img
+from tensorflow.keras.preprocessing.image import img_to_array
+
+#from keras.preprocessing.image import load_img
+#from keras.preprocessing.image import img_to_array
 
 from tensorflow.keras.applications.imagenet_utils import preprocess_input, decode_predictions
 from tensorflow.keras.models import load_model
@@ -81,9 +84,10 @@ def submit_file():
             flash(label)
             flash(acc)
             flash(filename)
-            return redirect('/')
+        return redirect('/')
+    return redirect('/')
 
 
 if __name__ == "__main__":
-    serve(app, host='0.0.0.0', port=port)
-#    app.run()
+#    serve(app, host='0.0.0.0', port=port)
+    app.run()
