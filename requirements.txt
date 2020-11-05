@@ -1,4 +1,6 @@
-Keras-Preprocessing==1.1.2
+Keras-Preprocessing==1.1.0
+keras==2.2.4
+keras-applications==1.0.8
 numpy==1.18.5
 ngraph-tensorflow-bridge==0.18.0
 tensorboard==2.3.0
