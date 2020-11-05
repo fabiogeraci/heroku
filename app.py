@@ -20,7 +20,7 @@ MODEL_PATH = 'malaria_detector.pkl'
 
 # Load your own trained model
 model = load_model(MODEL_PATH)
-model._make_predict_function()          # Necessary
+#model._make_predict_function()          # Necessary
 print('Model loaded. Start serving...')
 
 UPLOAD_FOLDER = '/uploads'
