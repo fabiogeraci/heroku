@@ -28,7 +28,7 @@ with open("model/classifier.pickle", "rb") as handle:
 #print('Model loaded. Start serving...')
 
 MYDIR = os.path.dirname(__file__)
-UPLOAD_FOLDER = '/uploads'
+UPLOAD_FOLDER = 'uploads/'
 
 app = Flask(__name__)
 app.secret_key = "secret key"
@@ -51,7 +51,7 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/', methods=['POST'])
+@app.route("/uploads", methods=['GET','POST'])
 def submit_file():
     if request.method == 'POST':
         if 'file' not in request.files:
