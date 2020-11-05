@@ -1,15 +1,18 @@
+#Python Standard lib
+import numpy as np
+import os
+
+#Flask Import for web app
 from flask import Flask, render_template, request, redirect, flash, url_for
 import urllib.request
 from werkzeug.utils import secure_filename
-import os
-
-from keras.preprocessing.image import load_img
-from keras.preprocessing.image import img_to_array
-import numpy as np
 
 # TensorFlow and tf.keras
 import tensorflow as tf
 from tensorflow import keras
+from keras.preprocessing.image import load_img
+from keras.preprocessing.image import img_to_array
+
 
 from tensorflow.keras.applications.imagenet_utils import preprocess_input, decode_predictions
 from tensorflow.keras.models import load_model
@@ -20,7 +23,6 @@ MODEL_PATH = 'malaria_detector.pkl'
 
 # Load your own trained model
 model = load_model(MODEL_PATH)
-#model._make_predict_function()          # Necessary
 print('Model loaded. Start serving...')
 
 UPLOAD_FOLDER = '/uploads'
