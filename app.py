@@ -41,6 +41,7 @@ def get_prediction(filename, classifier):
     image = img_to_array(image)
     image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
     image = preprocess_input(image)
+    classifier.precompute = False
     yhat = classifier.predict(image)
     label = decode_predictions(yhat)
     label = label[0][0]
