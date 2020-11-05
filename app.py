@@ -63,7 +63,7 @@ def submit_file():
             return redirect(request.url)
         if file:
             filename = secure_filename(file.filename)
-            file.save(os.path.join(MYDIR, app.config['UPLOAD_FOLDER'], filename))
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             get_prediction(filename)
             label, acc = get_prediction(filename)
             flash(label)
