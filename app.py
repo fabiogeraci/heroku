@@ -29,16 +29,25 @@ with open("model/classifier.pickle", "rb") as handle:
 #print('Model loaded. Start serving...')
 
 MYDIR = os.path.dirname(__file__)
-UPLOAD_FOLDER = 'images/'
+UPLOAD_FOLDER = 'uploads/'
+DOWNLOAD_FOLDER = 'images/'
+ALLOWED_EXTENSIONS = {'.jpg', '.png', '.jpeg'}
 
 app = Flask(__name__)
-app.secret_key = "secret key"
+app.secret_key = "secretkey"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
+# limit upload size to 2mb
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
+
+#function to check if the file extension of the uploaded file is valid.
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_prediction(filename):
 
-    #image = load_img('images/' + filename, target_size=(224, 224))
-    image = load_img(os.path.join(app.config['UPLOAD_FOLDER'], "image432.jpeg"), target_size=(224, 224))
+    image = load_img(os.path.join(app.config['UPLOAD_FOLDER'], filename), target_size=(224, 224))
+    #image = load_img(os.path.join(app.config['UPLOAD_FOLDER'], "image432.jpeg"), target_size=(224, 224))
     image = img_to_array(image)
     image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
     image = preprocess_input(image)
@@ -64,7 +73,7 @@ def submit_file():
         if file.filename == '':
             flash('No file selected for uploading')
             return redirect(request.url)
-        if file:
+        if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             get_prediction(filename)
