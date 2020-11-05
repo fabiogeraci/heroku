@@ -2,6 +2,7 @@
 import numpy as np
 import os
 import pickle
+from waitress import serve
 
 #Flask Import for web app
 from flask import Flask, render_template, request, redirect, flash, url_for
@@ -73,4 +74,5 @@ def submit_file():
 
 
 if __name__ == "__main__":
-    app.run()
+    serve(app, host='0.0.0.0', port=port)
+#    app.run()
