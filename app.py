@@ -51,7 +51,7 @@ def index():
     return render_template('index.html')
 
 
-@app.route("/uploads", methods=['GET','POST'])
+@app.route("/", methods=['GET','POST'])
 def submit_file():
     if request.method == 'POST':
         if 'file' not in request.files:
