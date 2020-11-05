@@ -25,8 +25,8 @@ with open("model/classifier.pickle", "rb") as handle:
 #MODEL_PATH = 'malaria_detector.pkl'
 
 # Load your own trained model
-model = load_model(classifier)
-print('Model loaded. Start serving...')
+#model = load_model(classifier)
+#print('Model loaded. Start serving...')
 
 UPLOAD_FOLDER = '/uploads'
 
@@ -34,13 +34,13 @@ app = Flask(__name__)
 app.secret_key = "secret key"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-def get_prediction(filename, model):
+def get_prediction(filename, classifier):
 
     image = load_img('uploads/' + filename, target_size=(224, 224))
     image = img_to_array(image)
     image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
     image = preprocess_input(image)
-    yhat = model.predict(image)
+    yhat = classifier.predict(image)
     label = decode_predictions(yhat)
     label = label[0][0]
     print('%s (%.2f%%)' % (label[1], label[2] * 100))
