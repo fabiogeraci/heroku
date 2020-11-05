@@ -29,7 +29,7 @@ with open("model/classifier.pickle", "rb") as handle:
 #print('Model loaded. Start serving...')
 
 MYDIR = os.path.dirname(__file__)
-UPLOAD_FOLDER = 'uploads/'
+UPLOAD_FOLDER = 'images/'
 
 app = Flask(__name__)
 app.secret_key = "secret key"
@@ -37,7 +37,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def get_prediction(filename, classifier):
 
-    image = load_img('uploads/' + filename, target_size=(224, 224))
+    image = load_img('images/' + filename, target_size=(224, 224))
     image = img_to_array(image)
     image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
     image = preprocess_input(image)
