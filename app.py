@@ -35,7 +35,7 @@ app = Flask(__name__)
 app.secret_key = "secret key"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-def get_prediction(filename, classifier):
+def get_prediction(filename):
 
     image = load_img('images/' + filename, target_size=(224, 224))
     image = img_to_array(image)
