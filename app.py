@@ -1,90 +1,114 @@
-import os
-import sys
-import pickle
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
 
-# Flask
-from flask import Flask, redirect, url_for, request, render_template, Response, jsonify, redirect
-from werkzeug.utils import secure_filename
-from gevent.pywsgi import WSGIServer
-
-# TensorFlow and tf.keras
+# Importing libraries
 import tensorflow as tf
-from tensorflow import keras
+import os
+import pickle
+import numpy as np
 
-from tensorflow.keras.applications.imagenet_utils import preprocess_input, decode_predictions
-from tensorflow.keras.models import load_model
+from flask import Flask, request, redirect, url_for, render_template
+from flask_bootstrap import Bootstrap
+from werkzeug.utils import secure_filename
+
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.preprocessing import image
 
-# Some utilites
-import numpy as np
-from util import base64_to_pil
+OUTPUT_DIR = 'uploads'
+SIZE = 64 # Image width
 
-# Declare a flask app
+# Setting up environment
+if not os.path.isdir(OUTPUT_DIR):
+    print('Creating static folder..')
+    os.mkdir(OUTPUT_DIR)
+
 app = Flask(__name__)
 
-print('Model loaded. Check http://127.0.0.1:5000/')
+# To setup Bootstrap templates
+Bootstrap(app)
+app.config['UPLOAD_FOLDER'] = OUTPUT_DIR
 
 # Model saved with Keras model.save()
-#MODEL_PATH = 'models/your_model.h5'
-
-
-# Load your own trained model
-# model = load_model(MODEL_PATH)
-# model._make_predict_function()          # Necessary
-# print('Model loaded. Start serving...')
 with open("model/classifier.pickle", "rb") as handle:
     classifier = pickle.load(handle)
+classifier.trainable = False
+classifier.compile = True
 
-def model_predict(img):
-    img = img.resize((224, 224))
+params = classifier.get_params()
+cs = classifier.classes_
+print(cs)
 
-    # Preprocessing the image
-    x = image.img_to_array(img)
-    # x = np.true_divide(x, 255)
-    x = np.expand_dims(x, axis=0)
+my_classes = ['0','1','2','3','4','5','6','7','8','9']
 
-    # Be careful how your trained model deals with the input
-    # otherwise, it won't make correct prediction!
-    x = preprocess_input(x, mode='tf')
-
-    preds = classifier.predict(x)
-    return preds
-
-
-@app.route('/', methods=['GET'])
-def index():
-    # Main page
+@app.route('/', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        # Check if the post request has the file part
+        if 'file' not in request.files:
+            print('No file part')
+            return redirect(request.url)
+        file = request.files['file']
+        # Check if no file was submitted to the HTML form
+        if file.filename == '':
+            print('No selected file')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            output = make_prediction(filename)
+            path_to_image = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            result = {
+                'output': output,
+                'path_to_image': path_to_image,
+                'size': SIZE
+            }
+            return render_template('show.html', result=result)
     return render_template('index.html')
 
+def allowed_file(filename):
+    '''
+    Checks if a given file `filename` is of type image with 'png', 'jpg', or 'jpeg' extensions
+    '''
+    ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'jfif'])
+    return ('.' in filename) and (filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS)
 
-@app.route('/predict', methods=['GET', 'POST'])
-def predict():
-    if request.method == 'POST':
-        # Get the image from post request
-        img = request.json
+def make_prediction(filename):
+    '''
+    Predicts a given `filename` file
+    '''
+    print('Filename is ', filename)
+    fullpath = os.path.join(OUTPUT_DIR, filename)
 
-        # Save the image to ./uploads
-        # img.save("./uploads/image.png")
+    # Reshape Function
+    test_data = rbgToPixelIntensities(fullpath)
+    print(test_data.shape)
+    print(type(test_data))
+    print(test_data)
 
-        # Make prediction
-        preds = model_predict(img)
+    # Generate predictions
+    predictions = classifier.predict(test_data)
+    print(type(predictions))
+    print(predictions)
 
-        # Process your result for human
-        pred_proba = "{:.3f}".format(np.amax(preds))  # Max probability
-        pred_class = decode_predictions(preds, top=1)  # ImageNet Decode
+    # Generate arg maxes for predictions
+    print(my_classes[np.argmax(predictions[0], axis=-1)])
 
-        result = str(pred_class[0][0][1])  # Convert to string
-        result = result.replace('_', ' ').capitalize()
+    return predictions
 
-        # Serialize the result, you can add additional fields
-        return jsonify(result=result, probability=pred_proba)
+def rbgToPixelIntensities(fullpath: np.array) -> np.array:
+    """ Convert images in RGB format (w x h x 3) to pixel intensities (w x h)
+    Arguments:
+    image (numpy.array): an input image in RGB format
+    Returns:
+    numpy.array: the input image expressed as grayscale pixel intensities
+    """
+    my_image = image.load_img(fullpath, target_size=(1, SIZE, SIZE))
+    my_image = image.img_to_array(my_image)
+    print(type(my_image))
+    print(my_image.shape)
 
-    return None
+    scaled = (255 - my_image) / 255
+    return np.sqrt(scaled[:, :, 0] ** 2 + scaled[:, :, 1] ** 2 + scaled[:, :, 2] ** 2)
 
-
-if __name__ == '__main__':
-    # app.run(port=5002, threaded=False)
-
-    # Serve the app with gevent
-    http_server = WSGIServer(('0.0.0.0', 5000), app)
-    http_server.serve_forever()
+if __name__ == "__main__":
+    app.run(debug=True)
