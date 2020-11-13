@@ -98,7 +98,7 @@ def img_reshape(scaled):
 
 
 def make_prediction(image):
-    # img = load_image(image)
+
     scaled_img = rbg_to_pixel_intensities(image)
     transformed_img = img_reshape(scaled_img)
 
@@ -111,4 +111,3 @@ def make_prediction(image):
 
 if __name__ == '__main__':
     app.run(debug=True)
-    # make_prediction()
