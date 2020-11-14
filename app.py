@@ -18,7 +18,7 @@ from werkzeug.utils import secure_filename
 
 # setting up folder structure for deployment
 OUTPUT_DIR = 'uploads'
-DOWNLOAD_DIR = "static/images"
+DOWNLOAD_DIR = "_static/images"
 if not os.path.isdir(OUTPUT_DIR):
     print('Creating static folder..')
     os.mkdir(OUTPUT_DIR)
