@@ -18,7 +18,7 @@ from werkzeug.utils import secure_filename
 
 # setting up folder structure for deployment
 OUTPUT_DIR = 'uploads'
-DOWNLOAD_DIR = "_static/images"
+DOWNLOAD_DIR = "static/images"
 if not os.path.isdir(OUTPUT_DIR):
     print('Creating static folder..')
     os.mkdir(OUTPUT_DIR)
@@ -105,8 +105,8 @@ def img_reshape(scaled):
     transformed_img = scaled.reshape(1, 64)
     transformed_img = np.interp(transformed_img, (transformed_img.min(), transformed_img.max()), (0, 16))
     print('transformed_img shape' + ' = ' + str(transformed_img.shape))
-    print('transformed_img shape' + ' = ' + str(transformed_img.max()))
-    print('transformed_img shape' + ' = ' + str(transformed_img.min()))
+    print('transformed_img max' + ' = ' + str(transformed_img.max()))
+    print('transformed_img min' + ' = ' + str(transformed_img.min()))
     return transformed_img
 
 
