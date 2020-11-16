@@ -30,7 +30,7 @@ app = Flask(__name__)
 
 # To setup Bootstrap templates
 Bootstrap(app)
-app.config['secret_key'] = "myownsecretkey"
+app.config['SECRET_KEY'] = 'your secret key'
 app.config['UPLOAD_FOLDER'] = OUTPUT_DIR
 app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_DIR
 
@@ -111,4 +111,4 @@ def img_reshape(scaled):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port='8080')
+    app.run(debug=True)
