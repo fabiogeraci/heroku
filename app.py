@@ -30,6 +30,7 @@ app = Flask(__name__)
 
 # To setup Bootstrap templates
 Bootstrap(app)
+app.config['secret_key'] = "myownsecretkey"
 app.config['UPLOAD_FOLDER'] = OUTPUT_DIR
 app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_DIR
 
@@ -67,6 +68,18 @@ def load_image():
     return render_template('index.html')
 
 
+def make_prediction(image):
+
+    scaled_img = rbg_to_pixel_intensities(image)
+    transformed_img = img_reshape(scaled_img)
+
+    # Generate predictions
+    predictions = classifier.predict(transformed_img)
+    print('This is the given prediction' +
+          ' = ' + str(predictions))
+    return predictions
+
+
 def rbg_to_pixel_intensities(image):
     print('Image Format' + ' = ' + str(image.format))
     print('Image Mode' + ' = ' + str(image.mode))
@@ -95,18 +108,6 @@ def img_reshape(scaled):
     print('transformed_img shape' + ' = ' + str(transformed_img.max()))
     print('transformed_img shape' + ' = ' + str(transformed_img.min()))
     return transformed_img
-
-
-def make_prediction(image):
-
-    scaled_img = rbg_to_pixel_intensities(image)
-    transformed_img = img_reshape(scaled_img)
-
-    # Generate predictions
-    predictions = classifier.predict(transformed_img)
-    print('This is the given prediction' +
-          ' = ' + str(predictions))
-    return predictions
 
 
 if __name__ == '__main__':
