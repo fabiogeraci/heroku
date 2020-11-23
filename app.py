@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 
 # Importing libraries
-import tensorflow as tf
+# import tensorflow as tf
 import os
 import time
 import numpy as np
